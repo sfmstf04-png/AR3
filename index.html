@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+
+    <a-scene xr-mode-ui="enabled: true" renderer="colorManagement: true;">
+      
+      <a-assets>
+        <img id="img1" src="1.jpg">
+        <img id="img2" src="2.jpg">
+        <img id="img3" src="3.jpg">
+        <img id="img4" src="4.jpg">
+        <img id="img5" src="5.jpg">
+        <img id="img6" src="6.jpg">
+      </a-assets>
+
+      <a-camera position="0 1.6 0"></a-camera>
+
+      <!-- 
+        We use a wrapper entity to position the arc. 
+        Position 0 0 -1.5 means the "center" of the curve is 1.5m in front of you.
+      -->
+      <a-entity position="0 0 -1.8">
+        
+        <!-- Far Left -->
+        <a-image src="#img1" position="-2.2 1.6 0.8" rotation="0 70 0" width="1" height="1.2"></a-image>
+
+        <!-- Mid Left -->
+        <a-image src="#img2" position="-1.4 1.6 0.2" rotation="0 40 0" width="1" height="1"></a-image>
+
+        <!-- Inner Left -->
+        <a-image src="#img3" position="-0.55 1.6 -0.2" rotation="0 15 0" width="0.9" height="1.1"></a-image>
+
+        <!-- Inner Right -->
+        <a-image src="#img4" position="0.55 1.6 -0.2" rotation="0 -15 0" width="0.9" height="1.1"></a-image>
+
+        <!-- Mid Right -->
+        <a-image src="#img5" position="1.4 1.6 0.2" rotation="0 -40 0" width="1" height="1"></a-image>
+
+        <!-- Far Right -->
+        <a-image src="#img6" position="2.2 1.6 0.8" rotation="0 -70 0" width="1" height="1.2"></a-image>
+
+      </a-entity>
+
+      <a-light type="ambient" intensity="0.8"></a-light>
+      <a-light type="directional" position="0 5 2" intensity="0.5"></a-light>
+
+    </a-scene>
+
+    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
+        <button onclick="document.querySelector('a-scene').enterAR()" style="padding: 15px 25px; border-radius: 30px; border: none; background: #007bff; color: white; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+            ENTER AR MUSEUM
+        </button>
+    </div>
+  </body>
+</html>
