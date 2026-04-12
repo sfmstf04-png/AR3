@@ -1,87 +1,290 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Maximize, Info, Camera, X, Play } from 'lucide-react';
 
-    <a-scene xr-mode-ui="enabled: true" renderer="colorManagement: true;">
-      
-      <a-assets>
-        <img id="img1" src="1.jpg">
-        <img id="img2" src="2.jpg">
-        <img id="img3" src="3.jpg">
-        <img id="img4" src="4.jpg">
-        <img id="img5" src="5.jpg">
-        <img id="img6" src="6.jpg">
-      </a-assets>
+// A-Frame components as any to avoid JSX type issues
+const Scene = 'a-scene' as any;
+const Assets = 'a-assets' as any;
+const Entity = 'a-entity' as any;
+const CameraEl = 'a-camera' as any;
+const Image = 'a-image' as any;
+const Light = 'a-light' as any;
+const Box = 'a-box' as any;
+const Text = 'a-text' as any;
+const Cursor = 'a-cursor' as any;
+const Plane = 'a-plane' as any;
 
-      <a-camera position="0 1.6 0">
-        <!-- Adding a cursor so the user can "click" in AR if needed -->
-        <a-cursor fuse="false" raycaster="objects: .clickable" color="white"></a-cursor>
-      </a-camera>
+const GALLERY_ITEMS = [
+  { id: 1, title: "Ethereal Dreams", artist: "Elena Rossi", seed: "dream" },
+  { id: 2, title: "Urban Pulse", artist: "Marcus Thorne", seed: "city" },
+  { id: 3, title: "Nature's Whisper", artist: "Sarah Jenkins", seed: "forest" },
+  { id: 4, title: "Digital Horizon", artist: "Alex Chen", seed: "tech" },
+  { id: 5, title: "Golden Hour", artist: "Maya Patel", seed: "sunset" },
+  { id: 6, title: "Abstract Flow", artist: "Julian Vane", seed: "abstract" },
+];
 
-      <a-entity id="museum-arc" position="0 0 -2.5">
+export default function App() {
+  const [selectedItem, setSelectedItem] = useState<typeof GALLERY_ITEMS[0] | null>(null);
+  const [isARMode, setIsARMode] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+
+  useEffect(() => {
+    const scene = document.querySelector('a-scene');
+    if (scene) {
+      scene.addEventListener('enter-vr', () => setIsARMode(true));
+      scene.addEventListener('exit-vr', () => setIsARMode(false));
+    }
+
+    // Add click listeners to items
+    const items = document.querySelectorAll('.clickable');
+    items.forEach((el, index) => {
+      el.addEventListener('click', () => {
+        setSelectedItem(GALLERY_ITEMS[index]);
+      });
+    });
+
+    return () => {
+      items.forEach((el, index) => {
+        el.removeEventListener('click', () => {
+          setSelectedItem(GALLERY_ITEMS[index]);
+        });
+      });
+    };
+  }, []);
+
+  const enterAR = () => {
+    const scene = document.querySelector('a-scene') as any;
+    if (scene) {
+      scene.enterAR();
+    }
+  };
+
+  return (
+    <div className="relative w-full h-screen bg-black overflow-hidden font-sans">
+      {/* A-Frame Scene */}
+      <Scene 
+        xr-mode-ui="enabled: true" 
+        renderer="colorManagement: true; antialias: true;"
+        embedded
+        className="w-full h-full"
+      >
+        <Assets>
+          {GALLERY_ITEMS.map(item => (
+            <img 
+              key={item.id} 
+              id={`img-${item.id}`} 
+              src={`https://picsum.photos/seed/${item.seed}/800/1000`} 
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
+            />
+          ))}
+        </Assets>
+
+        <CameraEl position="0 1.6 0">
+          <Cursor 
+            color="#FFD700" 
+            animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
+            animation__fusing="property: fusing; startEvents: fusing; from: 1 1 1; to: 0.1 0.1 0.1; dur: 1500"
+            event-set__mouseenter="_event: mouseenter; color: #007bff"
+            event-set__mouseleave="_event: mouseleave; color: #FFD700"
+            raycaster="objects: .clickable"
+          ></Cursor>
+        </CameraEl>
+
+        {/* Gallery Arc */}
+        <Entity position="0 0 -2">
+          {GALLERY_ITEMS.map((item, index) => {
+            const angle = (index - 2.5) * 25; // Spread items in an arc
+            const radius = 2.5;
+            const x = Math.sin(angle * (Math.PI / 180)) * radius;
+            const z = Math.cos(angle * (Math.PI / 180)) * radius - radius;
+            const rotation = -angle;
+
+            return (
+              <Entity 
+                key={item.id} 
+                position={`${x} 1.6 ${z}`} 
+                rotation={`0 ${rotation} 0`}
+              >
+                {/* Frame */}
+                <Box 
+                  position="0 0 -0.05" 
+                  width="1.1" 
+                  height="1.3" 
+                  depth="0.05" 
+                  color="#2c1e12"
+                ></Box>
+                
+                {/* Inner Frame (Gold) */}
+                <Box 
+                  position="0 0 -0.02" 
+                  width="1.02" 
+                  height="1.22" 
+                  depth="0.02" 
+                  color="#D4AF37"
+                ></Box>
+
+                {/* Image */}
+                <Image 
+                  src={`#img-${item.id}`} 
+                  width="1" 
+                  height="1.2"
+                  className="clickable"
+                ></Image>
+
+                {/* Label */}
+                <Text
+                  value={`${item.title}\n${item.artist}`}
+                  position="0 -0.75 0"
+                  align="center"
+                  width="2"
+                  color="#FFF"
+                  font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"
+                ></Text>
+
+                {/* Spotlight effect */}
+                <Light 
+                  type="spot" 
+                  color="#FFF" 
+                  intensity="0.5" 
+                  position="0 2 1" 
+                  target={`#img-${item.id}`}
+                ></Light>
+              </Entity>
+            );
+          })}
+        </Entity>
+
+        {/* Environment */}
+        <Light type="ambient" intensity="0.6"></Light>
+        <Light type="directional" position="0 5 2" intensity="0.3"></Light>
         
-        <!-- FRAME TEMPLATE: We use a wrapper entity for each artwork -->
-        
-        <!-- Artwork 1 -->
-        <a-entity position="-2.2 1.6 0.8" rotation="0 60 0">
-          <a-plane color="#111" width="1.1" height="1.4" position="0 0 -0.01"></a-plane> <!-- The Frame -->
-          <a-image src="#img1" width="1" height="1.3"></a-image> <!-- The Art -->
-          <a-text value="Artwork Title 01" align="center" position="0 -0.8 0" width="2" color="white"></a-text> <!-- Label -->
-        </a-entity>
+        {/* Floor for non-AR reference */}
+        {!isARMode && (
+          <Plane 
+            rotation="-90 0 0" 
+            width="20" 
+            height="20" 
+            color="#111" 
+            material="roughness: 0.8; metalness: 0.2"
+          ></Plane>
+        )}
+      </Scene>
 
-        <!-- Artwork 2 -->
-        <a-entity position="-1.3 1.6 0.2" rotation="0 35 0">
-          <a-plane color="#111" width="1.1" height="1.4" position="0 0 -0.01"></a-plane>
-          <a-image src="#img2" width="1" height="1.3"></a-image>
-          <a-text value="Artwork Title 02" align="center" position="0 -0.8 0" width="2"></a-text>
-        </a-entity>
+      {/* UI Overlay */}
+      <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 md:p-10">
+        {/* Header */}
+        <div className="flex justify-between items-start pointer-events-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10"
+          >
+            <h1 className="text-white text-xl md:text-2xl font-bold tracking-tight">Immersive AR Gallery</h1>
+            <p className="text-white/60 text-sm">Curated Digital Collection</p>
+          </motion.div>
 
-        <!-- Artwork 3 -->
-        <a-entity position="-0.45 1.6 -0.1" rotation="0 10 0">
-          <a-plane color="#111" width="1.1" height="1.4" position="0 0 -0.01"></a-plane>
-          <a-image src="#img3" width="1" height="1.3"></a-image>
-          <a-text value="Artwork Title 03" align="center" position="0 -0.8 0" width="2"></a-text>
-        </a-entity>
+          <button 
+            onClick={() => setShowInstructions(true)}
+            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-colors"
+          >
+            <Info size={24} />
+          </button>
+        </div>
 
-        <!-- Artwork 4 -->
-        <a-entity position="0.45 1.6 -0.1" rotation="0 -10 0">
-          <a-plane color="#111" width="1.1" height="1.4" position="0 0 -0.01"></a-plane>
-          <a-image src="#img4" width="1" height="1.3"></a-image>
-          <a-text value="Artwork Title 04" align="center" position="0 -0.8 0" width="2"></a-text>
-        </a-entity>
+        {/* Bottom Controls */}
+        <div className="flex flex-col items-center gap-6 pointer-events-auto">
+          <AnimatePresence>
+            {selectedItem && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-2xl max-w-xs w-full text-black relative"
+              >
+                <button 
+                  onClick={() => setSelectedItem(null)}
+                  className="absolute top-4 right-4 text-black/40 hover:text-black transition-colors"
+                >
+                  <X size={20} />
+                </button>
+                <h3 className="text-2xl font-bold mb-1">{selectedItem.title}</h3>
+                <p className="text-black/60 font-medium mb-4">by {selectedItem.artist}</p>
+                <p className="text-sm leading-relaxed text-black/80">
+                  This piece explores the intersection of digital consciousness and organic forms, 
+                  part of the "{selectedItem.seed.toUpperCase()}" series.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        <!-- Artwork 5 -->
-        <a-entity position="1.3 1.6 0.2" rotation="0 -35 0">
-          <a-plane color="#111" width="1.1" height="1.4" position="0 0 -0.01"></a-plane>
-          <a-image src="#img5" width="1" height="1.3"></a-image>
-          <a-text value="Artwork Title 05" align="center" position="0 -0.8 0" width="2"></a-text>
-        </a-entity>
+          <div className="flex gap-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={enterAR}
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold shadow-lg shadow-blue-900/40 flex items-center gap-3 transition-all"
+            >
+              <Maximize size={20} />
+              ENTER AR MUSEUM
+            </motion.button>
+          </div>
+        </div>
+      </div>
 
-        <!-- Artwork 6 -->
-        <a-entity position="2.2 1.6 0.8" rotation="0 -60 0">
-          <a-plane color="#111" width="1.1" height="1.4" position="0 0 -0.01"></a-plane>
-          <a-image src="#img6" width="1" height="1.3"></a-image>
-          <a-text value="Artwork Title 06" align="center" position="0 -0.8 0" width="2"></a-text>
-        </a-entity>
+      {/* Instructions Modal */}
+      <AnimatePresence>
+        {showInstructions && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-zinc-900 border border-white/10 p-8 rounded-[2.5rem] max-w-md w-full text-white shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 text-blue-500">
+                <Camera size={32} />
+              </div>
+              <h2 className="text-3xl font-bold mb-4">Welcome to the Gallery</h2>
+              <div className="space-y-4 mb-8 text-zinc-400">
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm font-bold text-white shrink-0">1</div>
+                  <p>Tap "Enter AR" to project the gallery into your space.</p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm font-bold text-white shrink-0">2</div>
+                  <p>Look around to explore the curved arc of masterpieces.</p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm font-bold text-white shrink-0">3</div>
+                  <p>Focus the golden cursor on any piece to reveal its story.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowInstructions(false)}
+                className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
+              >
+                <Play size={20} fill="currentColor" />
+                START EXPERIENCE
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      </a-entity>
-
-      <!-- LIGHTING IMPROVEMENT -->
-      <a-light type="ambient" intensity="0.6"></a-light>
-      <!-- Point light makes the frames look like they have a highlight -->
-      <a-light type="point" position="0 2 -1" intensity="0.8" distance="5"></a-light>
-
-    </a-scene>
-
-    <!-- UI -->
-    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
-        <button onclick="document.querySelector('a-scene').enterAR()" style="padding: 15px 25px; border-radius: 30px; border: none; background: #222; color: white; font-size: 18px; font-weight: bold; cursor: pointer; border: 2px solid #fff;">
-            START EXPERIENCE
-        </button>
+      <style>{`
+        .a-canvas {
+          width: 100% !important;
+          height: 100% !important;
+        }
+        .a-enter-vr {
+          display: none !important;
+        }
+      `}</style>
     </div>
-  </body>
-</html>
+  );
+}
