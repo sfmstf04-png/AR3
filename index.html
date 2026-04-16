@@ -381,13 +381,33 @@
         checkImg.crossOrigin = "anonymous";
         checkImg.onload = function() {
           const ratio = checkImg.naturalWidth / checkImg.naturalHeight;
-          const finalW = baseH * ratio;
+          let finalW, finalH;
+          
+          // Fit within baseW x baseH while maintaining aspect ratio (Contain)
+          if (ratio > (baseW / baseH)) {
+            finalW = baseW;
+            finalH = baseW / ratio;
+          } else {
+            finalH = baseH;
+            finalW = baseH * ratio;
+          }
+
           const canvas = document.getElementById(`canvas-${item.id}`);
           const bg = document.getElementById(`frame-bg-${item.id}`);
           const border = document.getElementById(`frame-border-${item.id}`);
-          if (canvas) canvas.setAttribute('width', finalW);
-          if (bg) bg.setAttribute('width', finalW + 0.15);
-          if (border) border.setAttribute('width', finalW + 0.06);
+          
+          if (canvas) {
+            canvas.setAttribute('width', finalW);
+            canvas.setAttribute('height', finalH);
+          }
+          if (bg) {
+            bg.setAttribute('width', finalW + 0.15);
+            bg.setAttribute('height', finalH + 0.15);
+          }
+          if (border) {
+            border.setAttribute('width', finalW + 0.06);
+            border.setAttribute('height', finalH + 0.06);
+          }
         };
       });
 
